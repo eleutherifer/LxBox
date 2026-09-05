@@ -16,7 +16,7 @@
 162.159.199.\* - colo=LED (аэропорт Пулково, Санкт-Петербург)<br />
 
 Актуальные конечные точки смотрите по ссылке:  
-https://help-guide.notion.site/Cloudflare-WARP-1f82684dab0d8024a1c8fec230f5e4e1
+https://help-guide.notion.site/Cloudflare-WARP-1f82684dab0d8024a1c8fec230f5e4e1  
 Например, для WARP WireGuad работают также конечные точки:
 - 8.6.112.*
 - 8.34.70.*
