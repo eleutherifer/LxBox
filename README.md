@@ -25,7 +25,7 @@ https://help-guide.notion.site/Cloudflare-WARP-1f82684dab0d8024a1c8fec230f5e4e1
 - 8.39.125.*
 - 8.39.204.*
 - 8.39.214.*
-- 8.47.69.*
+- 8.47.69.*  
 но 162.159.193.* для free аккаунтов не работает, а работает только для Zero Trust.
 
 # L×Box
