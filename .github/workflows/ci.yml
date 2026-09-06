@@ -419,14 +419,14 @@ jobs:
         env:
           VT_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
         run: |
-          mapfile -t APK_PATHS < <(find app/build/app/outputs/flutter-apk -name '*.apk' 2>/dev/null | sort)
+          mapfile -t APK_PATHS < <(find build/app/outputs/flutter-apk -name '*.apk' 2>/dev/null | sort)
 
           if [ -z "$VT_API_KEY" ]; then
             echo "VIRUSTOTAL_API_KEY не задан — пропускаю проверку."
             exit 0
           fi
           if [ "${#APK_PATHS[@]}" -eq 0 ]; then
-            echo "APK-файлы в app/build/app/outputs/flutter-apk/ не найдены — пропускаю проверку."
+            echo "APK-файлы в build/app/outputs/flutter-apk/ не найдены — пропускаю проверку."
             exit 0
           fi
 
