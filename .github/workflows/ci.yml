@@ -746,7 +746,7 @@ jobs:
       contents: write
     # §436 — rc не трогает latest.json: это фоллбэк UpdateChecker'а, и кандидат
     # в нём предложился бы всем GitHub-пользователям.
-    if: needs.meta.outputs.is_release == 'true' && needs.meta.outputs.is_prerelease != 'true'
+    if: github.repository == 'Leadaxe/LxBox' && needs.meta.outputs.is_release == 'true' && needs.meta.outputs.is_prerelease != 'true'
     steps:
       - name: Checkout main
         uses: actions/checkout@v5
