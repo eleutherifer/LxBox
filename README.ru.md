@@ -1,9 +1,9 @@
 # В данном форке:
 - добавлены используемые для регистрации WARP ссылки на API api.devices.cloudflare.com и zero-trust-client.cloudflareclient.com,
 - изменены наборы SNI для WARP,  
-  добавлены 360tv.ru, nplus1.ru, 2gis.ru, apteka.ru, autonews.ru, beeline.ru, deepseek.com, joomag.com, mail.ru, profi.ru, psbank.ru, pypi.org, rt.ru, rutube.ru, vk.ru, которые работают на HTTP/3 при любых условиях,  
+  добавлены 360tv.ru, nplus1.ru, 2gis.ru, apteka.ru, autonews.ru, beeline.ru, deepseek.com, joomag.com, profi.ru, psbank.ru, pypi.org, rt.ru, rutube.ru, которые работают на HTTP/3 при любых условиях,  
   при этом 360tv.ru и nplus1.ru хостятся в сети Cloudflare,
-  а если срабатывают белые списки на HTTP/3, то не работают сейчас например SNI gosuslugi.ru, lenta.ru, max.ru, mos.ru, ozon.ru, pochta.ru, rzd.ru, sberbank.ru, yandex.ru, а из зарубежных SNI вообще работают только deepseek.com, joomag.com и pypi.org,  
+  а если срабатывают белые списки на HTTP/3, то не работают сейчас например SNI gosuslugi.ru, lenta.ru, mail.ru, max.ru, mos.ru, ozon.ru, pochta.ru, rzd.ru, sberbank.ru, vk.ru, yandex.ru, а из зарубежных SNI вообще работают только deepseek.com, joomag.com и pypi.org,  
 - изменены наборы конечных точек для WARP,  
   например, для WARP WireGuad работают также конечные точки:  
   - 8.6.112.*  
