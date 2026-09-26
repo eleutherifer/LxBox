@@ -47,6 +47,16 @@ final class MapperSections {
   /// `<kind>/<singbox_type>` → секция; отсутствие секции тоже кэшируется.
   final Map<String, MapperSection?> _cache = {};
 
+  /// §551 — [typesFor] по виду источника: список пересобирался и сортировался
+  /// на каждом вызове, а маршрут ссылки зовёт его на каждой строке подписки.
+  /// Сбрасывается там же, где [_cache] (загрузка и сброс черновиков), и при
+  /// смене поколения реестра ([_typesRegistryGen]): состав берётся из обоих.
+  final Map<String, List<String>> _typesCache = {};
+
+  /// Поколение реестра ([ContractRegistry.generation]), от которого посчитан
+  /// [_typesCache].
+  int _typesRegistryGen = -1;
+
   /// Черновые файлы, уже прочитанные с диска/из ассетов. Ключ —
   /// `<каталог>/<имя>`: у одного протокола черновиков столько же, сколько
   /// видов источника, и класть их в одно пространство имён нельзя.
@@ -73,6 +83,7 @@ final class MapperSections {
     _draftDir = dir;
     _draft.clear();
     _cache.clear();
+    _typesCache.clear();
     _documents = null;
     for (final name in files) {
       final rel = name.contains('/') ? name : 'uri/$name';
@@ -86,6 +97,9 @@ final class MapperSections {
       }
       if (text == null) continue;
       _draft[key] = jsonDecode(text) as Map<String, dynamic>;
+      // Загрузка асинхронная: разбор между двумя файлами обязан видеть
+      // черновик таким, какой он есть сейчас, а не список до загрузки.
+      _typesCache.clear();
     }
     _draftLoaded = true;
   }
@@ -95,6 +109,7 @@ final class MapperSections {
   @visibleForTesting
   void resetForTesting() {
     _cache.clear();
+    _typesCache.clear();
     _draft.clear();
     _documents = null;
     _draftLoaded = false;
@@ -130,6 +145,7 @@ final class MapperSections {
         }
       }
     }
+    _typesCache.clear();
   }
 
   Future<String?> _readDraft(String rel) async {
@@ -187,8 +203,21 @@ final class MapperSections {
   /// Состав берётся из ЧЕРНОВИКА и РЕЕСТРА вместе, без списка в коде: имена
   /// протоколов в пакете движка не живут (греп-страж), и «знать, какие
   /// секции бывают» значило бы завести их здесь.
+  ///
+  /// §551 — результат кешируется ([_typesCache]) и отдаётся НЕИЗМЕНЯЕМЫМ:
+  /// один и тот же экземпляр до следующего сброса, по нему маршрут схем
+  /// ссылки узнаёт, что пересчитываться не нужно.
   List<String> typesFor(String kind) {
     if (!_draftLoaded) _loadDraftsFromDiskSync();
+    final regGen = ContractRegistry.I.generation;
+    if (regGen != _typesRegistryGen) {
+      _typesCache.clear();
+      _typesRegistryGen = regGen;
+    }
+    return _typesCache[kind] ??= List.unmodifiable(_typesForUncached(kind));
+  }
+
+  List<String> _typesForUncached(String kind) {
     final out = <String>{};
     final prefix = '$kind/';
     for (final key in _draft.keys) {
@@ -257,9 +286,34 @@ final class MapperSections {
     if (!_draftLoaded) _loadDraftsFromDiskSync();
     final raw = _rawSection(kind, singboxType);
     if (raw == null) return null;
-    final section =
-        MapperSection.fromJson(kind, singboxType, _sectionRefs(raw));
+    final section = MapperSection.fromJson(
+        kind, singboxType, _withIniDialect(singboxType, _sectionRefs(raw)));
     return section.include.isEmpty ? section : _withIncludes(section);
+  }
+
+  /// Форма `space: ini` у секции без своего `ini_dialect` (форма `conf_b64`
+  /// у ссылки) читает ini ДИАЛЕКТОМ ПРОТОКОЛА — тем, что объявила его
+  /// секция-`.conf`: у лаунчера правило диалекта (повтор `[Peer]` и код
+  /// `wgconf_extra_peer_dropped`) действует на всех входах `.conf`, включая
+  /// обёрнутые в ссылку. Имя секции-донора не пишется: берётся первая секция
+  /// протокола, которая диалект объявила.
+  Map<String, dynamic> _withIniDialect(
+      String singboxType, Map<String, dynamic> raw) {
+    if (raw[DraftNames.iniDialect] != null) return raw;
+    final forms = raw['forms'];
+    if (forms is! List ||
+        !forms.any((f) => f is Map && f['space'] == 'ini')) {
+      return raw;
+    }
+    final mappers = (ContractRegistry.I.rawProtocol(singboxType)?['mappers']
+            as Map?)
+        ?.cast<String, dynamic>();
+    if (mappers == null) return raw;
+    for (final m in mappers.values) {
+      final d = m is Map ? m[DraftNames.iniDialect] : null;
+      if (d is Map) return {...raw, DraftNames.iniDialect: d};
+    }
+    return raw;
   }
 
   /// Раскрыть `{"$ref": …}` у записей САМОЙ секции.
